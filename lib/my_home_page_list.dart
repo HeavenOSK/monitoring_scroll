@@ -10,7 +10,7 @@ class MyHomePageList extends StatefulWidget {
 }
 
 class _MyHomePageListState extends State<MyHomePageList> {
-  ScrollController _scrollController;
+  ScrollController _primaryScrollController;
   bool _isLoading = false;
 
   List<String> _items;
@@ -25,10 +25,10 @@ class _MyHomePageListState extends State<MyHomePageList> {
     _items = List<String>();
     Contents.forEach((content) => _items.add(content));
 
-    _scrollController = PrimaryScrollController.of(context);
-    _scrollController.addListener(() {
-      final maxScrollExtent = _scrollController.position.maxScrollExtent;
-      final currentPosition = _scrollController.position.pixels;
+    _primaryScrollController = PrimaryScrollController.of(context);
+    _primaryScrollController.addListener(() {
+      final maxScrollExtent = _primaryScrollController.position.maxScrollExtent;
+      final currentPosition = _primaryScrollController.position.pixels;
       if (maxScrollExtent > 0 && (maxScrollExtent - 20.0) <= currentPosition) {
         _addContents();
       }
@@ -39,7 +39,7 @@ class _MyHomePageListState extends State<MyHomePageList> {
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
-      controller: _scrollController,
+      controller: _primaryScrollController,
       itemBuilder: (context, index) {
         return _buildListItem(_items[index]);
       },
