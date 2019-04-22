@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:monitoring_scroll/contents.dart';
 
+import 'dart:math' as math;
+
+import 'package:monitoring_scroll/custom_bouncing_physics.dart';
+
 class MyHomePageList extends StatefulWidget {
   MyHomePageList({Key key, this.title}) : super(key: key);
   final String title;
@@ -11,34 +15,24 @@ class MyHomePageList extends StatefulWidget {
 
 class _MyHomePageListState extends State<MyHomePageList> {
   ScrollController _primaryScrollController;
-  bool _isLoading = false;
 
-  List<String> _items;
+  List<int> _items;
 
   @override
   void initState() {
+    _items = List.generate(5000, (index) => index);
     super.initState();
   }
 
   @override
   void didChangeDependencies() {
-    _items = List<String>();
-    Contents.forEach((content) => _items.add(content));
-
-    _primaryScrollController = PrimaryScrollController.of(context);
-    _primaryScrollController.addListener(() {
-      final maxScrollExtent = _primaryScrollController.position.maxScrollExtent;
-      final currentPosition = _primaryScrollController.position.pixels;
-      if (maxScrollExtent > 0 && (maxScrollExtent - 20.0) <= currentPosition) {
-        _addContents();
-      }
-    });
     super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
+      physics: CustomBouncingPhysics(),
       controller: _primaryScrollController,
       itemBuilder: (context, index) {
         return _buildListItem(_items[index]);
@@ -47,24 +41,60 @@ class _MyHomePageListState extends State<MyHomePageList> {
     );
   }
 
-  Widget _buildListItem(String content) {
+  Widget _buildListItem(int number) {
     return Container(
       alignment: Alignment.centerLeft,
       padding: EdgeInsets.all(12.0),
-      child: Text(content),
+      child: Text(number.toString()),
     );
   }
+}
 
-  _addContents() {
-    if (_isLoading) {
-      return;
-    }
-    _isLoading = true;
-    Future.delayed(Duration(seconds: 2), () {
-      setState(() {
-        Contents.forEach((content) => _items.add(content));
-      });
-      _isLoading = false;
-    });
+class CustomSimulation extends Simulation {
+  final double initialPosition;
+  final double velocity;
+
+  CustomSimulation({
+    this.initialPosition,
+    this.velocity,
+  });
+
+  @override
+  double x(double time) {
+    var max = math.max(
+        math.min(initialPosition, 0.0), initialPosition + velocity * time);
+
+    // print(max.toString());
+
+    return max;
+  }
+
+  @override
+  double dx(double time) {
+    // print(velocity.toString());
+    return velocity;
+  }
+
+  @override
+  bool isDone(double time) {
+    return false;
+  }
+}
+
+class CustomScrollPhysics extends ScrollPhysics {
+  const CustomScrollPhysics({ScrollPhysics parent}) : super(parent: parent);
+
+  @override
+  ScrollPhysics applyTo(ScrollPhysics ancestor) {
+    return CustomScrollPhysics();
+  }
+
+  @override
+  Simulation createBallisticSimulation(
+      ScrollMetrics position, double velocity) {
+    return CustomSimulation(
+      initialPosition: position.pixels,
+      velocity: velocity,
+    );
   }
 }
